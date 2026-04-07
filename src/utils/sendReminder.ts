@@ -3,9 +3,9 @@ import { Link } from '../types';
 
 // EmailJS 설정값 - 나중에 본인 값으로 교체
 export const EMAILJS_CONFIG = {
-  SERVICE_ID: 'YOUR_SERVICE_ID',
-  TEMPLATE_ID: 'YOUR_TEMPLATE_ID',
-  PUBLIC_KEY: 'YOUR_PUBLIC_KEY',
+  SERVICE_ID: 'service_clj7sed',
+  TEMPLATE_ID: 'template_w4ebyi9',
+  PUBLIC_KEY: 'YFq2iL7U2wDVTTsBq',
 };
 
 export const sendReminder = async (toEmail: string, links: Link[]): Promise<void> => {
