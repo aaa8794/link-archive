@@ -1,56 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
 import { Link, Stage } from '../types';
 
-const STORAGE_KEY = 'link-archive-links';
+const toLink = (row: any): Link => ({
+  id: row.id,
+  title: row.title,
+  url: row.url,
+  description: row.memo,
+  stage: row.stage,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  userEmail: row.user_email,
+});
 
-const loadLinks = (): Link[] => {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-};
+const useLinks = (userEmail: string) => {
+  const [links, setLinks] = useState<Link[]>([]);
 
-const saveLinks = (links: Link[]) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(links));
-};
+  const fetchLinks = useCallback(async () => {
+    if (!userEmail) return;
+    const { data } = await supabase
+      .from('links')
+      .select('*')
+      .eq('user_email', userEmail)
+      .order('created_at', { ascending: false });
+    if (data) setLinks(data.map(toLink));
+  }, [userEmail]);
 
-const useLinks = () => {
-  const [links, setLinks] = useState<Link[]>(loadLinks);
+  useEffect(() => {
+    fetchLinks();
+  }, [fetchLinks]);
 
-  const addLink = (title: string, url: string, description?: string) => {
-    const newLink: Link = {
-      id: Date.now().toString(),
-      title,
-      url,
-      description,
-      stage: 'saved',
-      createdAt: new Date().toISOString(),
-    };
-    setLinks((prev) => {
-      const updated = [newLink, ...prev];
-      saveLinks(updated);
-      return updated;
-    });
+  const addLink = async (title: string, url: string, description?: string) => {
+    const { data } = await supabase
+      .from('links')
+      .insert({ title, url, memo: description, stage: 'saved', user_email: userEmail })
+      .select()
+      .single();
+    if (data) setLinks((prev) => [toLink(data), ...prev]);
   };
 
-  const moveLink = (id: string, stage: Stage) => {
-    setLinks((prev) => {
-      const updated = prev.map((link) =>
-        link.id === id ? { ...link, stage } : link
-      );
-      saveLinks(updated);
-      return updated;
-    });
+  const moveLink = async (id: string, stage: Stage) => {
+    await supabase
+      .from('links')
+      .update({ stage, updated_at: new Date().toISOString() })
+      .eq('id', id);
+    setLinks((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, stage, updatedAt: new Date().toISOString() } : l))
+    );
   };
 
-  const removeLink = (id: string) => {
-    setLinks((prev) => {
-      const updated = prev.filter((link) => link.id !== id);
-      saveLinks(updated);
-      return updated;
-    });
+  const removeLink = async (id: string) => {
+    await supabase.from('links').delete().eq('id', id);
+    setLinks((prev) => prev.filter((l) => l.id !== id));
   };
 
   return { links, addLink, moveLink, removeLink };

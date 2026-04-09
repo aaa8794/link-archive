@@ -7,4 +7,6 @@ export interface Link {
   description?: string;
   stage: Stage;
   createdAt: string;
+  updatedAt: string;
+  userEmail: string;
 }
