@@ -71,15 +71,6 @@ const App: React.FC = () => {
         ))}
       </main>
 
-      {!email && (
-        <div className="email-prompt">
-          <p>시작하려면 이메일을 설정해주세요.</p>
-          <button className="btn-primary" onClick={() => setShowEmailSettings(true)}>
-            이메일 설정하기
-          </button>
-        </div>
-      )}
-
       {showForm && (
         <AddLinkForm onAdd={addLink} onClose={() => setShowForm(false)} />
       )}
