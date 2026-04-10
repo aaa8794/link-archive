@@ -11,6 +11,7 @@ const toLink = (row: any): Link => ({
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   userEmail: row.user_email,
+  folderId: row.folder_id,
 });
 
 const useLinks = (userEmail: string) => {
@@ -30,10 +31,10 @@ const useLinks = (userEmail: string) => {
     fetchLinks();
   }, [fetchLinks]);
 
-  const addLink = async (title: string, url: string, description?: string) => {
+  const addLink = async (title: string, url: string, description?: string, folderId?: string) => {
     const { data } = await supabase
       .from('links')
-      .insert({ title, url, memo: description, stage: 'saved', user_email: userEmail })
+      .insert({ title, url, memo: description, stage: 'saved', user_email: userEmail, folder_id: folderId || null })
       .select()
       .single();
     if (data) setLinks((prev) => [toLink(data), ...prev]);

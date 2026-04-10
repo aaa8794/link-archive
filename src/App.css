@@ -58,38 +58,167 @@ body {
   cursor: not-allowed;
 }
 
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #e5e5e5;
-  color: #111;
-  padding: 12px 24px;
+/* Layout */
+.layout {
+  display: flex;
+  height: calc(100vh - 65px);
+}
+
+/* Sidebar */
+.sidebar {
+  width: 200px;
+  min-width: 200px;
+  background: #141414;
+  border-right: 1px solid #2a2a2a;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.folder-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
   border-radius: 8px;
-  font-size: 14px;
-  z-index: 200;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-/* Modal desc */
-.modal-desc {
+  cursor: pointer;
   font-size: 13px;
-  color: #888;
-  margin-top: -8px;
+  color: #aaa;
+  transition: background 0.15s;
+}
+
+.folder-item:hover {
+  background: #2a2a2a;
+  color: #e5e5e5;
+}
+
+.folder-item.active {
+  background: #2a2a2a;
+  color: #fff;
+  font-weight: 600;
+}
+
+.folder-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reminder-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.reminder-toggle:hover {
+  opacity: 1;
+}
+
+.btn-folder-delete {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.btn-folder-delete:hover {
+  color: #e53e3e;
+}
+
+.new-folder-form {
+  display: flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.new-folder-form input {
+  flex: 1;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: #e5e5e5;
+  outline: none;
+}
+
+.new-folder-form input::placeholder {
+  color: #555;
+}
+
+.new-folder-form .btn-primary {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.btn-new-folder {
+  background: none;
+  border: 1px dashed #333;
+  border-radius: 8px;
+  color: #555;
+  font-size: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+
+.btn-new-folder:hover {
+  border-color: #555;
+  color: #aaa;
 }
 
 /* Board */
 .board {
+  flex: 1;
+  overflow: auto;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.folder-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e5e5e5;
+}
+
+.reminder-badge {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.reminder-badge.on {
+  background: #1a3a2a;
+  color: #4caf82;
+}
+
+.reminder-badge.off {
+  background: #2a2a2a;
+  color: #666;
+}
+
+.columns {
   display: flex;
   gap: 20px;
-  padding: 28px 32px;
   align-items: flex-start;
 }
 
@@ -289,7 +418,8 @@ body {
   gap: 10px;
 }
 
-.modal input {
+.modal input,
+.modal select {
   background: #242424;
   border: 1px solid #333;
   border-radius: 8px;
@@ -304,8 +434,13 @@ body {
   color: #555;
 }
 
-.modal input:focus {
+.modal input:focus,
+.modal select:focus {
   border-color: #555;
+}
+
+.modal select option {
+  background: #242424;
 }
 
 .modal-actions {
@@ -328,4 +463,24 @@ body {
 
 .btn-cancel:hover {
   background: #333;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #e5e5e5;
+  color: #111;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 200;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
