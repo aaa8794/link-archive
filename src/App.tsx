@@ -31,13 +31,6 @@ const App: React.FC = () => {
     localStorage.setItem(EMAIL_KEY, newEmail);
   };
 
-  const visibleLinks = selectedFolderId
-    ? links.filter((l) => l.folderId === selectedFolderId)
-    : links.filter((l) => !l.folderId);
-
-  const byStage = (stage: Stage): Link[] =>
-    visibleLinks.filter((l) => l.stage === stage);
-
   const handleAddFolder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
@@ -45,6 +38,13 @@ const App: React.FC = () => {
     setNewFolderName('');
     setShowNewFolderInput(false);
   };
+
+  const visibleLinks = selectedFolderId
+    ? links.filter((l) => l.folderId === selectedFolderId)
+    : links.filter((l) => !l.folderId);
+
+  const byStage = (stage: Stage): Link[] =>
+    visibleLinks.filter((l) => l.stage === stage);
 
   const selectedFolder = folders.find((f) => f.id === selectedFolderId);
 
@@ -98,23 +98,9 @@ const App: React.FC = () => {
             </div>
           ))}
 
-          {showNewFolderInput ? (
-            <form onSubmit={handleAddFolder} className="new-folder-form">
-              <input
-                autoFocus
-                type="text"
-                placeholder="폴더 이름"
-                value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
-                onBlur={() => { if (!newFolderName) setShowNewFolderInput(false); }}
-              />
-              <button type="submit" className="btn-primary">확인</button>
-            </form>
-          ) : (
-            <button className="btn-new-folder" onClick={() => setShowNewFolderInput(true)}>
-              + 폴더 추가
-            </button>
-          )}
+          <button className="btn-new-folder" onClick={() => setShowNewFolderInput(true)}>
+            + 폴더 추가
+          </button>
         </aside>
 
         {/* 메인 보드 */}
@@ -162,6 +148,27 @@ const App: React.FC = () => {
           folders={folders}
           defaultFolderId={selectedFolderId || undefined}
         />
+      )}
+
+      {showNewFolderInput && (
+        <div className="modal-overlay" onClick={() => setShowNewFolderInput(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>폴더 추가</h2>
+            <form onSubmit={handleAddFolder}>
+              <input
+                autoFocus
+                type="text"
+                placeholder="폴더 이름"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+              />
+              <div className="modal-actions">
+                <button type="button" className="btn-cancel" onClick={() => setShowNewFolderInput(false)}>취소</button>
+                <button type="submit" className="btn-primary">추가</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {showEmailSettings && (
