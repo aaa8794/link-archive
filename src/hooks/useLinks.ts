@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { Link, Stage } from '../types';
+import { Link } from '../types';
 
 const toLink = (row: any): Link => ({
   id: row.id,
   title: row.title,
   url: row.url,
   description: row.memo,
-  stage: row.stage,
+  liked: row.liked ?? false,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   userEmail: row.user_email,
@@ -34,20 +34,15 @@ const useLinks = (userEmail: string) => {
   const addLink = async (title: string, url: string, description?: string, folderId?: string) => {
     const { data } = await supabase
       .from('links')
-      .insert({ title, url, memo: description, stage: 'saved', user_email: userEmail, folder_id: folderId || null })
+      .insert({ title, url, memo: description, liked: false, user_email: userEmail, folder_id: folderId || null })
       .select()
       .single();
     if (data) setLinks((prev) => [toLink(data), ...prev]);
   };
 
-  const moveLink = async (id: string, stage: Stage) => {
-    await supabase
-      .from('links')
-      .update({ stage, updated_at: new Date().toISOString() })
-      .eq('id', id);
-    setLinks((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, stage, updatedAt: new Date().toISOString() } : l))
-    );
+  const toggleLike = async (id: string, liked: boolean) => {
+    await supabase.from('links').update({ liked }).eq('id', id);
+    setLinks((prev) => prev.map((l) => (l.id === id ? { ...l, liked } : l)));
   };
 
   const removeLink = async (id: string) => {
@@ -55,7 +50,7 @@ const useLinks = (userEmail: string) => {
     setLinks((prev) => prev.filter((l) => l.id !== id));
   };
 
-  return { links, addLink, moveLink, removeLink };
+  return { links, addLink, toggleLike, removeLink };
 };
 
 export default useLinks;

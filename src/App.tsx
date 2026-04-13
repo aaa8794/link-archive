@@ -5,26 +5,24 @@ import AddLinkForm from './components/AddLinkForm';
 import EmailSettings from './components/EmailSettings';
 import useLinks from './hooks/useLinks';
 import useFolders from './hooks/useFolders';
-import { Link, Stage } from './types';
-
-const COLUMNS: { stage: Stage; label: string; emoji: string }[] = [
-  { stage: 'saved', label: '저장', emoji: '📌' },
-  { stage: 'in-progress', label: '진행중', emoji: '🔄' },
-  { stage: 'done', label: '실행', emoji: '✅' },
-];
+import useInsights from './hooks/useInsights';
+import { Folder } from './types';
 
 const EMAIL_KEY = 'link-archive-email';
 
 const App: React.FC = () => {
   const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY) || '');
-  const { links, addLink, moveLink, removeLink } = useLinks(email);
+  const { links, addLink, toggleLike, removeLink } = useLinks(email);
   const { folders, addFolder, removeFolder, toggleReminder } = useFolders(email);
+  const { insights, fetchInsights, addInsight, togglePin, removeInsight } = useInsights();
 
   const [showForm, setShowForm] = useState(false);
   const [showEmailSettings, setShowEmailSettings] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-  const [newFolderName, setNewFolderName] = useState('');
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null);
+  const [filterLiked, setFilterLiked] = useState(false);
 
   const handleSaveEmail = (newEmail: string) => {
     setEmail(newEmail);
@@ -39,12 +37,15 @@ const App: React.FC = () => {
     setShowNewFolderInput(false);
   };
 
-  const visibleLinks = selectedFolderId
-    ? links.filter((l) => l.folderId === selectedFolderId)
-    : links.filter((l) => !l.folderId);
+  const handleExpand = (linkId: string) => {
+    const next = expandedLinkId === linkId ? null : linkId;
+    setExpandedLinkId(next);
+    if (next && !insights[next]) fetchInsights(next);
+  };
 
-  const byStage = (stage: Stage): Link[] =>
-    visibleLinks.filter((l) => l.stage === stage);
+  const visibleLinks = links
+    .filter((l) => selectedFolderId ? l.folderId === selectedFolderId : !l.folderId)
+    .filter((l) => filterLiked ? l.liked : true);
 
   const selectedFolder = folders.find((f) => f.id === selectedFolderId);
 
@@ -54,10 +55,12 @@ const App: React.FC = () => {
         <h1 className="logo">Linkbook</h1>
         <div className="header-actions">
           <button
-            className="btn-secondary"
-            onClick={() => setShowEmailSettings(true)}
-            title={email || '이메일 설정'}
+            className={`btn-filter ${filterLiked ? 'active' : ''}`}
+            onClick={() => setFilterLiked(!filterLiked)}
           >
+            {filterLiked ? '❤️ 좋아요만' : '🤍 전체'}
+          </button>
+          <button className="btn-secondary" onClick={() => setShowEmailSettings(true)}>
             {email ? `✉ ${email}` : '✉ 이메일 설정'}
           </button>
           <button className="btn-primary" onClick={() => setShowForm(true)}>
@@ -75,7 +78,7 @@ const App: React.FC = () => {
           >
             📁 전체
           </div>
-          {folders.map((folder) => (
+          {folders.map((folder: Folder) => (
             <div
               key={folder.id}
               className={`folder-item ${selectedFolderId === folder.id ? 'active' : ''}`}
@@ -83,7 +86,7 @@ const App: React.FC = () => {
             >
               <span className="folder-name">📂 {folder.name}</span>
               <button
-                className={`reminder-toggle ${folder.reminderEnabled ? 'on' : 'off'}`}
+                className="reminder-toggle"
                 onClick={(e) => { e.stopPropagation(); toggleReminder(folder.id, !folder.reminderEnabled); }}
                 title={folder.reminderEnabled ? '알림 켜짐' : '알림 꺼짐'}
               >
@@ -97,13 +100,12 @@ const App: React.FC = () => {
               </button>
             </div>
           ))}
-
           <button className="btn-new-folder" onClick={() => setShowNewFolderInput(true)}>
             + 폴더 추가
           </button>
         </aside>
 
-        {/* 메인 보드 */}
+        {/* 메인 */}
         <main className="board">
           {selectedFolder && (
             <div className="folder-header">
@@ -113,42 +115,31 @@ const App: React.FC = () => {
               </span>
             </div>
           )}
-          <div className="columns">
-            {COLUMNS.map(({ stage, label, emoji }) => (
-              <div key={stage} className="column">
-                <div className="column-header">
-                  <span className="column-emoji">{emoji}</span>
-                  <span className="column-label">{label}</span>
-                  <span className="column-count">{byStage(stage).length}</span>
-                </div>
-                <div className="column-body">
-                  {byStage(stage).length === 0 ? (
-                    <p className="empty-hint">비어 있어요</p>
-                  ) : (
-                    byStage(stage).map((link) => (
-                      <LinkCard
-                        key={link.id}
-                        link={link}
-                        onMove={moveLink}
-                        onRemove={removeLink}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            ))}
+
+          <div className="link-count">{visibleLinks.length}개의 링크</div>
+
+          <div className="link-list">
+            {visibleLinks.length === 0 ? (
+              <p className="empty-hint">저장된 링크가 없어요</p>
+            ) : (
+              visibleLinks.map((link) => (
+                <LinkCard
+                  key={link.id}
+                  link={link}
+                  insights={insights[link.id] || []}
+                  onToggleLike={toggleLike}
+                  onRemove={removeLink}
+                  onExpand={handleExpand}
+                  isExpanded={expandedLinkId === link.id}
+                  onAddInsight={addInsight}
+                  onTogglePin={togglePin}
+                  onRemoveInsight={removeInsight}
+                />
+              ))
+            )}
           </div>
         </main>
       </div>
-
-      {showForm && (
-        <AddLinkForm
-          onAdd={addLink}
-          onClose={() => setShowForm(false)}
-          folders={folders}
-          defaultFolderId={selectedFolderId || undefined}
-        />
-      )}
 
       {showNewFolderInput && (
         <div className="modal-overlay" onClick={() => setShowNewFolderInput(false)}>
@@ -169,6 +160,15 @@ const App: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {showForm && (
+        <AddLinkForm
+          onAdd={addLink}
+          onClose={() => setShowForm(false)}
+          folders={folders}
+          defaultFolderId={selectedFolderId || undefined}
+        />
       )}
 
       {showEmailSettings && (

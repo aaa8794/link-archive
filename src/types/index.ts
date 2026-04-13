@@ -1,5 +1,3 @@
-export type Stage = 'saved' | 'in-progress' | 'done';
-
 export interface Folder {
   id: string;
   name: string;
@@ -8,12 +6,21 @@ export interface Folder {
   createdAt: string;
 }
 
+export interface Insight {
+  id: string;
+  linkId: string;
+  content: string;
+  imageUrl?: string;
+  isPinned: boolean;
+  createdAt: string;
+}
+
 export interface Link {
   id: string;
   title: string;
   url: string;
   description?: string;
-  stage: Stage;
+  liked: boolean;
   createdAt: string;
   updatedAt: string;
   userEmail: string;
