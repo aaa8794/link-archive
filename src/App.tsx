@@ -12,7 +12,7 @@ const EMAIL_KEY = 'link-archive-email';
 
 const App: React.FC = () => {
   const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY) || '');
-  const { links, addLink, toggleLike, removeLink } = useLinks(email);
+  const { links, addLink, updateLink, toggleLike, removeLink } = useLinks(email);
   const { folders, addFolder, removeFolder, toggleReminder } = useFolders(email);
   const { insights, fetchInsights, addInsight, togglePin, removeInsight } = useInsights();
 
@@ -23,6 +23,8 @@ const App: React.FC = () => {
   const [newFolderName, setNewFolderName] = useState('');
   const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null);
   const [filterLiked, setFilterLiked] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const handleSaveEmail = (newEmail: string) => {
     setEmail(newEmail);
@@ -41,6 +43,25 @@ const App: React.FC = () => {
     const next = expandedLinkId === linkId ? null : linkId;
     setExpandedLinkId(next);
     if (next && !insights[next]) fetchInsights(next);
+  };
+
+  const handleAiSummary = async () => {
+    if (aiLoading) return;
+    setAiLoading(true);
+    setAiSummary(null);
+    try {
+      const res = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ links: visibleLinks }),
+      });
+      const data = await res.json();
+      setAiSummary(data.summary);
+    } catch {
+      setAiSummary('요약 생성에 실패했어요.');
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const visibleLinks = links
@@ -70,11 +91,11 @@ const App: React.FC = () => {
       </header>
 
       <div className="layout">
-        {/* 사이드바 */}
+        {/* 왼쪽 사이드바 - 폴더 */}
         <aside className="sidebar">
           <div
             className={`folder-item ${selectedFolderId === null ? 'active' : ''}`}
-            onClick={() => setSelectedFolderId(null)}
+            onClick={() => { setSelectedFolderId(null); setAiSummary(null); }}
           >
             📁 전체
           </div>
@@ -82,13 +103,12 @@ const App: React.FC = () => {
             <div
               key={folder.id}
               className={`folder-item ${selectedFolderId === folder.id ? 'active' : ''}`}
-              onClick={() => setSelectedFolderId(folder.id)}
+              onClick={() => { setSelectedFolderId(folder.id); setAiSummary(null); }}
             >
               <span className="folder-name">📂 {folder.name}</span>
               <button
                 className="reminder-toggle"
                 onClick={(e) => { e.stopPropagation(); toggleReminder(folder.id, !folder.reminderEnabled); }}
-                title={folder.reminderEnabled ? '알림 켜짐' : '알림 꺼짐'}
               >
                 {folder.reminderEnabled ? '🔔' : '🔕'}
               </button>
@@ -107,16 +127,28 @@ const App: React.FC = () => {
 
         {/* 메인 */}
         <main className="board">
-          {selectedFolder && (
-            <div className="folder-header">
-              <span>📂 {selectedFolder.name}</span>
-              <span className={`reminder-badge ${selectedFolder.reminderEnabled ? 'on' : 'off'}`}>
-                {selectedFolder.reminderEnabled ? '🔔 알림 켜짐' : '🔕 알림 꺼짐'}
-              </span>
+          <div className="board-header">
+            {selectedFolder && (
+              <div className="folder-header">
+                <span>📂 {selectedFolder.name}</span>
+                <span className={`reminder-badge ${selectedFolder.reminderEnabled ? 'on' : 'off'}`}>
+                  {selectedFolder.reminderEnabled ? '🔔 알림 켜짐' : '🔕 알림 꺼짐'}
+                </span>
+              </div>
+            )}
+            <div className="board-meta">
+              <span className="link-count">{visibleLinks.length}개의 링크</span>
+              {selectedFolderId && (
+                <button
+                  className={`btn-ai-summary ${aiLoading ? 'loading' : ''}`}
+                  onClick={handleAiSummary}
+                  disabled={aiLoading || visibleLinks.length === 0}
+                >
+                  {aiLoading ? '요약 중...' : '✨ AI 읽기 모드'}
+                </button>
+              )}
             </div>
-          )}
-
-          <div className="link-count">{visibleLinks.length}개의 링크</div>
+          </div>
 
           <div className="link-list">
             {visibleLinks.length === 0 ? (
@@ -127,10 +159,12 @@ const App: React.FC = () => {
                   key={link.id}
                   link={link}
                   insights={insights[link.id] || []}
+                  folders={folders}
                   onToggleLike={toggleLike}
                   onRemove={removeLink}
                   onExpand={handleExpand}
                   isExpanded={expandedLinkId === link.id}
+                  onUpdate={updateLink}
                   onAddInsight={addInsight}
                   onTogglePin={togglePin}
                   onRemoveInsight={removeInsight}
@@ -139,6 +173,27 @@ const App: React.FC = () => {
             )}
           </div>
         </main>
+
+        {/* 오른쪽 AI 요약 사이드바 */}
+        {aiSummary !== null && (
+          <aside className="ai-sidebar">
+            <div className="ai-sidebar-header">
+              <span>✨ AI 읽기 모드</span>
+              <button className="btn-close" onClick={() => setAiSummary(null)}>×</button>
+            </div>
+            <div className="ai-summary-content">
+              <p>{aiSummary}</p>
+            </div>
+            <div className="ai-link-list">
+              {visibleLinks.map((l) => (
+                <div key={l.id} className="ai-link-item">
+                  <span className="ai-link-title">{l.title}</span>
+                  {l.description && <span className="ai-link-desc">{l.description}</span>}
+                </div>
+              ))}
+            </div>
+          </aside>
+        )}
       </div>
 
       {showNewFolderInput && (

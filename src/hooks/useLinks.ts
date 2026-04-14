@@ -8,6 +8,8 @@ const toLink = (row: any): Link => ({
   url: row.url,
   description: row.memo,
   liked: row.liked ?? false,
+  retrospective: row.retrospective,
+  tags: row.tags ?? [],
   createdAt: row.created_at,
   updatedAt: row.updated_at,
   userEmail: row.user_email,
@@ -34,10 +36,21 @@ const useLinks = (userEmail: string) => {
   const addLink = async (title: string, url: string, description?: string, folderId?: string) => {
     const { data } = await supabase
       .from('links')
-      .insert({ title, url, memo: description, liked: false, user_email: userEmail, folder_id: folderId || null })
+      .insert({ title, url, memo: description, liked: false, tags: [], user_email: userEmail, folder_id: folderId || null })
       .select()
       .single();
     if (data) setLinks((prev) => [toLink(data), ...prev]);
+  };
+
+  const updateLink = async (id: string, updates: { title?: string; folderId?: string; tags?: string[]; retrospective?: string }) => {
+    const dbUpdates: any = { updated_at: new Date().toISOString() };
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.folderId !== undefined) dbUpdates.folder_id = updates.folderId || null;
+    if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
+    if (updates.retrospective !== undefined) dbUpdates.retrospective = updates.retrospective;
+
+    await supabase.from('links').update(dbUpdates).eq('id', id);
+    setLinks((prev) => prev.map((l) => l.id === id ? { ...l, ...updates, updatedAt: new Date().toISOString() } : l));
   };
 
   const toggleLike = async (id: string, liked: boolean) => {
@@ -50,7 +63,7 @@ const useLinks = (userEmail: string) => {
     setLinks((prev) => prev.filter((l) => l.id !== id));
   };
 
-  return { links, addLink, toggleLike, removeLink };
+  return { links, addLink, updateLink, toggleLike, removeLink };
 };
 
 export default useLinks;

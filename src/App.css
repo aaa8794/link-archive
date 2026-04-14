@@ -513,6 +513,256 @@ body {
   margin-top: 4px;
 }
 
+/* Board header */
+.board-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.board-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* AI Summary button */
+.btn-ai-summary {
+  background: rgba(255, 209, 102, 0.1);
+  color: #FFD166;
+  border: 1px solid rgba(255, 209, 102, 0.3);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-ai-summary:hover { background: rgba(255, 209, 102, 0.2); }
+.btn-ai-summary.loading { opacity: 0.6; cursor: not-allowed; }
+.btn-ai-summary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* AI Sidebar */
+.ai-sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: #141414;
+  border-left: 1px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.ai-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #2a2a2a;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFD166;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.btn-close:hover { color: #aaa; }
+
+.ai-summary-content {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2a2a2a;
+  background: rgba(255, 209, 102, 0.04);
+}
+
+.ai-summary-content p {
+  font-size: 13px;
+  color: #ccc;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.ai-link-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-link-item {
+  padding: 10px 12px;
+  background: #1a1a1a;
+  border-radius: 10px;
+  border: 1px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-link-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e5e5e5;
+}
+
+.ai-link-desc {
+  font-size: 11px;
+  color: #666;
+}
+
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #2a2a2a;
+  margin-bottom: 12px;
+  padding-bottom: 0;
+}
+
+.tab {
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  margin-bottom: -1px;
+}
+
+.tab:hover { color: #aaa; }
+.tab.active { color: #FFD166; border-bottom-color: #FFD166; }
+
+/* Tag */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.tag {
+  font-size: 11px;
+  color: #888;
+  background: #2a2a2a;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+/* Edit form */
+.edit-title-input {
+  flex: 1;
+  background: #2a2a2a;
+  border: 1px solid #FFD166;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e5e5e5;
+  outline: none;
+}
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.edit-form input,
+.edit-form select {
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #e5e5e5;
+  outline: none;
+}
+
+.edit-form input:focus,
+.edit-form select:focus { border-color: #FFD166; }
+.edit-form select option { background: #242424; }
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.link-card-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  padding: 0;
+}
+
+.btn-icon:hover { opacity: 1; }
+
+/* Retrospective */
+.retro-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.retro-view {
+  min-height: 80px;
+  padding: 10px 14px;
+  background: #1e1e1e;
+  border: 1px dashed #333;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.retro-view:hover { border-color: #FFD166; }
+
+.retro-content {
+  font-size: 13px;
+  color: #ccc;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.retro-empty {
+  font-size: 13px;
+  color: #444;
+}
+
+.retro-textarea {
+  background: #1e1e1e;
+  border: 1px solid #FFD166;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #e5e5e5;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  width: 100%;
+}
+
 /* Toast */
 .toast {
   position: fixed;

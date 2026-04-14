@@ -21,6 +21,8 @@ export interface Link {
   url: string;
   description?: string;
   liked: boolean;
+  retrospective?: string;
+  tags: string[];
   createdAt: string;
   updatedAt: string;
   userEmail: string;
