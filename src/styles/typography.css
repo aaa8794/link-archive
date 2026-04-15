@@ -1,0 +1,246 @@
+/* ================================
+   archiv*o Typography Tokens
+   Source: Figma - Archivo Renewal
+   Font: Pretendard
+================================ */
+
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+:root {
+  --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* ── Font Size ── */
+  --font-size-32: 32px;
+  --font-size-24: 24px;
+  --font-size-22: 22px;
+  --font-size-20: 20px;
+  --font-size-16: 16px;
+  --font-size-14: 14px;
+  --font-size-12: 12px;
+
+  /* ── Font Weight ── */
+  --font-weight-bold:     700;
+  --font-weight-semibold: 600;
+  --font-weight-medium:   500;
+  --font-weight-regular:  400;
+
+  /* ── Line Height ── */
+  --line-height-tight:  1.3;   /* 32px 타이틀용 */
+  --line-height-normal: 1.4;   /* 24px Bold용 */
+  --line-height-loose:  1.6;   /* 대부분의 텍스트 */
+
+  /* ── Letter Spacing ── */
+  --letter-spacing-default: -0.02em;
+  --letter-spacing-tight:   -0.02em;
+}
+
+/* ================================
+   Typography Classes
+================================ */
+
+/* Title 32 - SemiBold */
+.title-32-600 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-32);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 24 - Bold */
+.title-24-700 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-24);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-normal);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+/* Title 24 - Medium */
+.title-24-500 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-24);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 22 - Bold */
+.title-22-700 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-22);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 22 - SemiBold */
+.title-22-600 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-22);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 22 - Medium */
+.title-22-500 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-22);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 22 - Regular */
+.title-22-400 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-22);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 20 - Bold */
+.title-20-700 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 20 - SemiBold */
+.title-20-600 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 20 - Medium */
+.title-20-500 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 20 - Regular */
+.title-20-400 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-20);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 16 - Bold */
+.title-16-700 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 16 - SemiBold */
+.title-16-600 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 16 - Medium */
+.title-16-500 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 16 - Regular */
+.title-16-400 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-16);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 14 - Bold */
+.title-14-700 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 14 - SemiBold */
+.title-14-600 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 14 - Medium */
+.title-14-500 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 14 - Regular */
+.title-14-400 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-14);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 12 - Bold */
+.title-12-700 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 12 - SemiBold */
+.title-12-600 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 12 - Medium */
+.title-12-500 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}
+
+/* Title 12 - Regular */
+.title-12-400 {
+  font-family: var(--font-family);
+  font-size: var(--font-size-12);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-loose);
+  letter-spacing: var(--letter-spacing-default);
+}

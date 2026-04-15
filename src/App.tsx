@@ -79,10 +79,10 @@ const App: React.FC = () => {
             className={`btn-filter ${filterLiked ? 'active' : ''}`}
             onClick={() => setFilterLiked(!filterLiked)}
           >
-            {filterLiked ? '❤️ 좋아요만' : '🤍 전체'}
+            {filterLiked ? '좋아요만' : '전체'}
           </button>
           <button className="btn-secondary" onClick={() => setShowEmailSettings(true)}>
-            {email ? `✉ ${email}` : '✉ 이메일 설정'}
+            {email ? email : '이메일 설정'}
           </button>
           <button className="btn-primary" onClick={() => setShowForm(true)}>
             + 링크 추가
@@ -97,7 +97,7 @@ const App: React.FC = () => {
             className={`folder-item ${selectedFolderId === null ? 'active' : ''}`}
             onClick={() => { setSelectedFolderId(null); setAiSummary(null); }}
           >
-            📁 전체
+            전체
           </div>
           {folders.map((folder: Folder) => (
             <div
@@ -105,7 +105,7 @@ const App: React.FC = () => {
               className={`folder-item ${selectedFolderId === folder.id ? 'active' : ''}`}
               onClick={() => { setSelectedFolderId(folder.id); setAiSummary(null); }}
             >
-              <span className="folder-name">📂 {folder.name}</span>
+              <span className="folder-name">{folder.name}</span>
               <button
                 className="reminder-toggle"
                 onClick={(e) => { e.stopPropagation(); toggleReminder(folder.id, !folder.reminderEnabled); }}
