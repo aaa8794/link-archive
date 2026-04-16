@@ -1,4 +1,4 @@
-# Link Archive
+# Archivo
 
 Link Archive is a React application designed to manage and display a collection of links. This project allows users to add, remove, and view links in a user-friendly interface.
 
