@@ -57,6 +57,11 @@ const LinkCard: React.FC<LinkCardProps> = ({
     <div className={`link-card ${link.liked ? 'liked' : ''} ${isExpanded ? 'expanded' : ''}`}>
       {/* 카드 헤더 */}
       <div className="link-card-main" onClick={() => !isEditing && onExpand(link.id)}>
+        {link.ogImage && (
+          <div className="link-og-thumb-wrap">
+            <img src={link.ogImage} alt={link.title} className="link-og-thumb" />
+          </div>
+        )}
         <div className="link-card-body">
           <div className="link-card-top">
             {isEditing ? (

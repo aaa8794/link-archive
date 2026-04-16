@@ -2,22 +2,30 @@ import React, { useState } from 'react';
 import './App.css';
 import LinkCard from './components/LinkCard';
 import AddLinkForm from './components/AddLinkForm';
-import EmailSettings from './components/EmailSettings';
+import AuthPage from './components/AuthPage';
+import useAuth from './hooks/useAuth';
 import useLinks from './hooks/useLinks';
 import useFolders from './hooks/useFolders';
 import useInsights from './hooks/useInsights';
 import { Folder } from './types';
 
-const EMAIL_KEY = 'link-archive-email';
+const INTERESTS = [
+  { id: 'visual', label: '비주얼', desc: '이미지, 색감, 레퍼런스' },
+  { id: 'writing', label: '글 & 문장', desc: '카피, 아티클, 에세이' },
+  { id: 'product', label: '제품 & UX', desc: '기획, 서비스 디자인' },
+  { id: 'culture', label: '트렌드 & 컬처', desc: '소셜, 패션, 음악' },
+  { id: 'space', label: '공간 & 오브젝트', desc: '인테리어, 물건' },
+  { id: 'tech', label: '테크 & 코드', desc: '개발, 툴, 자동화' },
+];
 
 const App: React.FC = () => {
-  const [email, setEmail] = useState(() => localStorage.getItem(EMAIL_KEY) || '');
-  const { links, addLink, updateLink, toggleLike, removeLink } = useLinks(email);
-  const { folders, addFolder, removeFolder, toggleReminder } = useFolders(email);
+  const { user, profile, loading, signOut, completeOnboarding } = useAuth();
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const { links, addLink, updateLink, toggleLike, removeLink } = useLinks(user?.id ?? '');
+  const { folders, addFolder, removeFolder, toggleReminder } = useFolders(user?.id ?? '');
   const { insights, fetchInsights, addInsight, togglePin, removeInsight } = useInsights();
 
   const [showForm, setShowForm] = useState(false);
-  const [showEmailSettings, setShowEmailSettings] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
@@ -26,10 +34,19 @@ const App: React.FC = () => {
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  const handleSaveEmail = (newEmail: string) => {
-    setEmail(newEmail);
-    localStorage.setItem(EMAIL_KEY, newEmail);
-  };
+  if (loading) {
+    return (
+      <div className="auth-page">
+        <div className="auth-loading">
+          <span className="auth-logo">archiv<span className="auth-logo-star">*</span>o</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
 
   const handleAddFolder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +90,7 @@ const App: React.FC = () => {
   return (
     <div className="app">
       <header className="header">
-        <h1 className="logo">Linkbook</h1>
+        <h1 className="logo"><img src="/Archivologo.svg" alt="archiv*o" className="logo-img" /></h1>
         <div className="header-actions">
           <button
             className={`btn-filter ${filterLiked ? 'active' : ''}`}
@@ -81,8 +98,8 @@ const App: React.FC = () => {
           >
             {filterLiked ? '좋아요만' : '전체'}
           </button>
-          <button className="btn-secondary" onClick={() => setShowEmailSettings(true)}>
-            {email ? email : '이메일 설정'}
+          <button className="btn-secondary" onClick={signOut}>
+            {user.email}
           </button>
           <button className="btn-primary" onClick={() => setShowForm(true)}>
             + 링크 추가
@@ -91,7 +108,6 @@ const App: React.FC = () => {
       </header>
 
       <div className="layout">
-        {/* 왼쪽 사이드바 - 폴더 */}
         <aside className="sidebar">
           <div
             className={`folder-item ${selectedFolderId === null ? 'active' : ''}`}
@@ -125,7 +141,6 @@ const App: React.FC = () => {
           </button>
         </aside>
 
-        {/* 메인 */}
         <main className="board">
           <div className="board-header">
             {selectedFolder && (
@@ -174,7 +189,6 @@ const App: React.FC = () => {
           </div>
         </main>
 
-        {/* 오른쪽 AI 요약 사이드바 */}
         {aiSummary !== null && (
           <aside className="ai-sidebar">
             <div className="ai-sidebar-header">
@@ -226,12 +240,56 @@ const App: React.FC = () => {
         />
       )}
 
-      {showEmailSettings && (
-        <EmailSettings
-          savedEmail={email}
-          onSave={handleSaveEmail}
-          onClose={() => setShowEmailSettings(false)}
-        />
+      {profile && !profile.onboardingCompleted && (
+        <div className="modal-overlay">
+          <div className="modal welcome-modal">
+            <div className="welcome-header">
+              <img src="/Archivologo.svg" alt="archiv*o" className="welcome-logo" />
+              <h2 className="welcome-title">
+                <span className="welcome-username">{profile.username}</span>님, 어서오세요!
+              </h2>
+              <p className="welcome-desc">
+                어떤 영감에 관심이 있나요?<br />
+                아카이브를 채워갈 테마를 골라보세요.
+              </p>
+            </div>
+
+            <div className="interest-grid">
+              {INTERESTS.map((item) => (
+                <button
+                  key={item.id}
+                  className={`interest-chip ${selectedInterests.includes(item.id) ? 'selected' : ''}`}
+                  onClick={() =>
+                    setSelectedInterests((prev) =>
+                      prev.includes(item.id)
+                        ? prev.filter((i) => i !== item.id)
+                        : [...prev, item.id]
+                    )
+                  }
+                >
+                  <span className="interest-label">{item.label}</span>
+                  <span className="interest-desc">{item.desc}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="welcome-actions">
+              <button
+                className="btn-primary welcome-start-btn"
+                onClick={() => completeOnboarding(selectedInterests)}
+                disabled={selectedInterests.length === 0}
+              >
+                시작하기
+              </button>
+              <button
+                className="btn-skip"
+                onClick={() => completeOnboarding([])}
+              >
+                건너뛰기
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

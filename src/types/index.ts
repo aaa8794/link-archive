@@ -2,7 +2,7 @@ export interface Folder {
   id: string;
   name: string;
   reminderEnabled: boolean;
-  userEmail: string;
+  userId: string;
   createdAt: string;
 }
 
@@ -19,12 +19,13 @@ export interface Link {
   id: string;
   title: string;
   url: string;
+  ogImage?: string;
   description?: string;
   liked: boolean;
   retrospective?: string;
   tags: string[];
   createdAt: string;
   updatedAt: string;
-  userEmail: string;
+  userId: string;
   folderId?: string;
 }

@@ -6,37 +6,38 @@ const toLink = (row: any): Link => ({
   id: row.id,
   title: row.title,
   url: row.url,
+  ogImage: row.og_image ?? undefined,
   description: row.memo,
   liked: row.liked ?? false,
   retrospective: row.retrospective,
   tags: row.tags ?? [],
   createdAt: row.created_at,
   updatedAt: row.updated_at,
-  userEmail: row.user_email,
+  userId: row.user_id,
   folderId: row.folder_id,
 });
 
-const useLinks = (userEmail: string) => {
+const useLinks = (userId: string) => {
   const [links, setLinks] = useState<Link[]>([]);
 
   const fetchLinks = useCallback(async () => {
-    if (!userEmail) return;
+    if (!userId) return;
     const { data } = await supabase
       .from('links')
       .select('*')
-      .eq('user_email', userEmail)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
     if (data) setLinks(data.map(toLink));
-  }, [userEmail]);
+  }, [userId]);
 
   useEffect(() => {
     fetchLinks();
   }, [fetchLinks]);
 
-  const addLink = async (title: string, url: string, description?: string, folderId?: string) => {
+  const addLink = async (title: string, url: string, ogImage?: string, description?: string, folderId?: string) => {
     const { data } = await supabase
       .from('links')
-      .insert({ title, url, memo: description, liked: false, tags: [], user_email: userEmail, folder_id: folderId || null })
+      .insert({ title, url, og_image: ogImage || null, memo: description, liked: false, tags: [], user_id: userId, folder_id: folderId || null })
       .select()
       .single();
     if (data) setLinks((prev) => [toLink(data), ...prev]);

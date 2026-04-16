@@ -6,22 +6,22 @@ const toFolder = (row: any): Folder => ({
   id: row.id,
   name: row.name,
   reminderEnabled: row.reminder_enabled,
-  userEmail: row.user_email,
+  userId: row.user_id,
   createdAt: row.created_at,
 });
 
-const useFolders = (userEmail: string) => {
+const useFolders = (userId: string) => {
   const [folders, setFolders] = useState<Folder[]>([]);
 
   const fetchFolders = useCallback(async () => {
-    if (!userEmail) return;
+    if (!userId) return;
     const { data } = await supabase
       .from('folders')
       .select('*')
-      .eq('user_email', userEmail)
+      .eq('user_id', userId)
       .order('created_at', { ascending: true });
     if (data) setFolders(data.map(toFolder));
-  }, [userEmail]);
+  }, [userId]);
 
   useEffect(() => {
     fetchFolders();
@@ -30,7 +30,7 @@ const useFolders = (userEmail: string) => {
   const addFolder = async (name: string) => {
     const { data } = await supabase
       .from('folders')
-      .insert({ name, user_email: userEmail, reminder_enabled: true })
+      .insert({ name, user_id: userId, reminder_enabled: true })
       .select()
       .single();
     if (data) setFolders((prev) => [...prev, toFolder(data)]);
