@@ -1290,6 +1290,68 @@ body {
   width: 100%;
 }
 
+/* Anonymous Banner */
+.anon-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  background: linear-gradient(90deg, #f0f1ff 0%, #e8eaff 100%);
+  border-bottom: 1px solid var(--color-primary-10);
+  font-size: 13px;
+  color: var(--color-black-60);
+}
+
+.anon-banner-cta {
+  background: none;
+  border: none;
+  color: var(--color-primary-100);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-primary);
+}
+
+.anon-banner-cta:hover { opacity: 0.75; }
+
+.anon-banner-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--color-black-40);
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+/* Auth modal overlay */
+.auth-modal-overlay {
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-modal-inner {
+  position: relative;
+}
+
+/* Auth modal close button */
+.auth-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: var(--color-black-40);
+  cursor: pointer;
+  line-height: 1;
+  z-index: 1;
+}
+
+.auth-modal-close:hover { color: var(--color-black-80); }
+
 /* OG Preview (AddLinkForm) */
 .og-fetching {
   font-size: 13px;

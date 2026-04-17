@@ -19,7 +19,7 @@ const INTERESTS = [
 ];
 
 const App: React.FC = () => {
-  const { user, profile, loading, signOut, completeOnboarding } = useAuth();
+  const { user, profile, loading, isAnonymous, signOut, completeOnboarding } = useAuth();
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const { links, addLink, updateLink, toggleLike, removeLink } = useLinks(user?.id ?? '');
   const { folders, addFolder, removeFolder, toggleReminder } = useFolders(user?.id ?? '');
@@ -33,6 +33,14 @@ const App: React.FC = () => {
   const [filterLiked, setFilterLiked] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authDefaultTab, setAuthDefaultTab] = useState<'login' | 'signup'>('signup');
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  const openAuth = (tab: 'login' | 'signup') => {
+    setAuthDefaultTab(tab);
+    setShowAuthModal(true);
+  };
 
   if (loading) {
     return (
@@ -42,10 +50,6 @@ const App: React.FC = () => {
         </div>
       </div>
     );
-  }
-
-  if (!user) {
-    return <AuthPage />;
   }
 
   const handleAddFolder = async (e: React.FormEvent) => {
@@ -92,20 +96,38 @@ const App: React.FC = () => {
       <header className="header">
         <h1 className="logo"><img src="/Archivologo.svg" alt="archiv*o" className="logo-img" /></h1>
         <div className="header-actions">
-          <button
-            className={`btn-filter ${filterLiked ? 'active' : ''}`}
-            onClick={() => setFilterLiked(!filterLiked)}
-          >
-            {filterLiked ? '좋아요만' : '전체'}
-          </button>
-          <button className="btn-secondary" onClick={signOut}>
-            {user.email}
-          </button>
+          {isAnonymous ? (
+            <>
+              <button className="btn-secondary" onClick={() => openAuth('login')}>로그인</button>
+            </>
+          ) : (
+            <>
+              <button
+                className={`btn-filter ${filterLiked ? 'active' : ''}`}
+                onClick={() => setFilterLiked(!filterLiked)}
+              >
+                {filterLiked ? '좋아요만' : '전체'}
+              </button>
+              <button className="btn-secondary" onClick={signOut}>
+                {profile?.username ?? user?.email}
+              </button>
+            </>
+          )}
           <button className="btn-primary" onClick={() => setShowForm(true)}>
             + 링크 추가
           </button>
         </div>
       </header>
+
+      {isAnonymous && !bannerDismissed && (
+        <div className="anon-banner">
+          <span>현재 이 기기에만 저장돼요.</span>
+          <button className="anon-banner-cta" onClick={() => openAuth('signup')}>
+            계정 만들면 모바일에서도 볼 수 있어요 →
+          </button>
+          <button className="anon-banner-close" onClick={() => setBannerDismissed(true)} aria-label="닫기">×</button>
+        </div>
+      )}
 
       <div className="layout">
         <aside className="sidebar">
@@ -237,6 +259,13 @@ const App: React.FC = () => {
           onClose={() => setShowForm(false)}
           folders={folders}
           defaultFolderId={selectedFolderId || undefined}
+        />
+      )}
+
+      {showAuthModal && (
+        <AuthPage
+          onClose={() => setShowAuthModal(false)}
+          defaultTab={authDefaultTab}
         />
       )}
 

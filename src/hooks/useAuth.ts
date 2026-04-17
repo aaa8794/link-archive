@@ -22,7 +22,7 @@ const useAuth = () => {
 
     if (data) {
       setProfile({
-        username: data.username,
+        username: data.username ?? '',
         interests: data.interests ?? [],
         onboardingCompleted: data.onboarding_completed,
       });
@@ -30,18 +30,23 @@ const useAuth = () => {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null;
-      setUser(u);
-      if (u) fetchProfile(u);
+      if (!u) {
+        const { data } = await supabase.auth.signInAnonymously();
+        setUser(data.user ?? null);
+      } else {
+        setUser(u);
+        if (!u.is_anonymous) fetchProfile(u);
+      }
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null;
       setUser(u);
-      if (u) fetchProfile(u);
-      else setProfile(null);
+      if (u && !u.is_anonymous) fetchProfile(u);
+      else if (!u) setProfile(null);
     });
 
     return () => subscription.unsubscribe();
@@ -56,6 +61,29 @@ const useAuth = () => {
     return !!data;
   };
 
+  // 기존 익명 세션을 실제 계정으로 전환 (데이터 그대로 유지)
+  const convertAccount = async (email: string, password: string, username: string) => {
+    const taken = await checkUsername(username);
+    if (taken) return { error: new Error('username_taken') };
+
+    const { error } = await supabase.auth.updateUser({
+      email,
+      password,
+      data: { username },
+    });
+
+    if (!error && user) {
+      await supabase
+        .from('profiles')
+        .update({ username, email })
+        .eq('id', user.id);
+      setProfile({ username, interests: [], onboardingCompleted: false });
+    }
+
+    return { error };
+  };
+
+  // 새 계정 회원가입 (익명 세션 없을 때)
   const signUp = async (email: string, password: string, username: string) => {
     const taken = await checkUsername(username);
     if (taken) return { error: new Error('username_taken') };
@@ -68,8 +96,12 @@ const useAuth = () => {
     return { error };
   };
 
-  // 아이디로 로그인 — profiles에서 email 조회 후 signInWithPassword
+  // 아이디로 로그인 (익명 세션 있으면 먼저 로그아웃)
   const signIn = async (username: string, password: string) => {
+    if (user?.is_anonymous) {
+      await supabase.auth.signOut();
+    }
+
     const { data: profileData } = await supabase
       .from('profiles')
       .select('email')
@@ -95,9 +127,12 @@ const useAuth = () => {
     return { error };
   };
 
+  // 로그아웃 후 새 익명 세션 생성
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    const { data } = await supabase.auth.signInAnonymously();
+    setUser(data.user ?? null);
   };
 
   const completeOnboarding = async (interests: string[]) => {
@@ -115,12 +150,14 @@ const useAuth = () => {
     user,
     profile,
     loading,
+    isAnonymous: user?.is_anonymous ?? true,
     signUp,
     signIn,
     signInWithGoogle,
     signOut,
     checkUsername,
     completeOnboarding,
+    convertAccount,
   };
 };
 
