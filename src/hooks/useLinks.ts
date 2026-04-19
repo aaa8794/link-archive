@@ -35,12 +35,14 @@ const useLinks = (userId: string) => {
   }, [fetchLinks]);
 
   const addLink = async (title: string, url: string, ogImage?: string, description?: string, folderId?: string) => {
-    const { data } = await supabase
+    const { error } = await supabase
       .from('links')
-      .insert({ title, url, og_image: ogImage || null, memo: description, liked: false, tags: [], user_id: userId, folder_id: folderId || null })
-      .select()
-      .single();
-    if (data) setLinks((prev) => [toLink(data), ...prev]);
+      .insert({ title, url, og_image: ogImage || null, memo: description, liked: false, tags: [], user_id: userId, folder_id: folderId || null });
+    if (error) {
+      console.error('addLink error:', error);
+      return;
+    }
+    await fetchLinks();
   };
 
   const updateLink = async (id: string, updates: { title?: string; folderId?: string; tags?: string[]; retrospective?: string }) => {

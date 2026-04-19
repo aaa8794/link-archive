@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import './App.css';
 import LinkCard from './components/LinkCard';
+import LinkDetailPanel from './components/LinkDetailPanel';
 import AddLinkForm from './components/AddLinkForm';
 import AuthPage from './components/AuthPage';
 import useAuth from './hooks/useAuth';
 import useLinks from './hooks/useLinks';
 import useFolders from './hooks/useFolders';
 import useInsights from './hooks/useInsights';
-import { Folder } from './types';
+import { Folder, Link } from './types';
 
 const INTERESTS = [
   { id: 'visual', label: '비주얼', desc: '이미지, 색감, 레퍼런스' },
@@ -29,7 +30,7 @@ const App: React.FC = () => {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null);
+  const [selectedLink, setSelectedLink] = useState<Link | null>(null);
   const [filterLiked, setFilterLiked] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -60,10 +61,9 @@ const App: React.FC = () => {
     setShowNewFolderInput(false);
   };
 
-  const handleExpand = (linkId: string) => {
-    const next = expandedLinkId === linkId ? null : linkId;
-    setExpandedLinkId(next);
-    if (next && !insights[next]) fetchInsights(next);
+  const handleLinkClick = (link: Link) => {
+    setSelectedLink(link);
+    if (!insights[link.id]) fetchInsights(link.id);
   };
 
   const handleAiSummary = async () => {
@@ -135,7 +135,8 @@ const App: React.FC = () => {
             className={`folder-item ${selectedFolderId === null ? 'active' : ''}`}
             onClick={() => { setSelectedFolderId(null); setAiSummary(null); }}
           >
-            전체
+            <span className="sidebar-icon sidebar-home-icon">🏠</span>
+            <span className="folder-name">전체</span>
           </div>
           {folders.map((folder: Folder) => (
             <div
@@ -143,6 +144,7 @@ const App: React.FC = () => {
               className={`folder-item ${selectedFolderId === folder.id ? 'active' : ''}`}
               onClick={() => { setSelectedFolderId(folder.id); setAiSummary(null); }}
             >
+              <span className="sidebar-icon">{selectedFolderId === folder.id ? '📂' : '📁'}</span>
               <span className="folder-name">{folder.name}</span>
               <button
                 className="reminder-toggle"
@@ -159,7 +161,8 @@ const App: React.FC = () => {
             </div>
           ))}
           <button className="btn-new-folder" onClick={() => setShowNewFolderInput(true)}>
-            + 폴더 추가
+            <span className="sidebar-icon sidebar-add-icon">+</span>
+            <span className="folder-name">폴더 추가</span>
           </button>
         </aside>
 
@@ -198,13 +201,8 @@ const App: React.FC = () => {
                   insights={insights[link.id] || []}
                   folders={folders}
                   onToggleLike={toggleLike}
-                  onRemove={removeLink}
-                  onExpand={handleExpand}
-                  isExpanded={expandedLinkId === link.id}
+                  onClick={() => handleLinkClick(link)}
                   onUpdate={updateLink}
-                  onAddInsight={addInsight}
-                  onTogglePin={togglePin}
-                  onRemoveInsight={removeInsight}
                 />
               ))
             )}
@@ -266,6 +264,23 @@ const App: React.FC = () => {
         <AuthPage
           onClose={() => setShowAuthModal(false)}
           defaultTab={authDefaultTab}
+        />
+      )}
+
+      {selectedLink && (
+        <LinkDetailPanel
+          link={selectedLink}
+          insights={insights[selectedLink.id] || []}
+          folders={folders}
+          onClose={() => setSelectedLink(null)}
+          onUpdate={(id, updates) => {
+            updateLink(id, updates);
+            setSelectedLink((prev) => prev ? { ...prev, ...updates } : null);
+          }}
+          onAddInsight={addInsight}
+          onTogglePin={togglePin}
+          onRemoveInsight={removeInsight}
+          onRemove={removeLink}
         />
       )}
 
