@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import './App.css';
 import LinkCard from './components/LinkCard';
 import LinkDetailPanel from './components/LinkDetailPanel';
+import FolderSidePanel from './components/FolderSidePanel';
 import AddLinkForm from './components/AddLinkForm';
 import AuthPage from './components/AuthPage';
 import useAuth from './hooks/useAuth';
 import useLinks from './hooks/useLinks';
 import useFolders from './hooks/useFolders';
-import useInsights from './hooks/useInsights';
 import { Folder, Link } from './types';
 
 const INTERESTS = [
@@ -24,7 +24,6 @@ const App: React.FC = () => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const { links, addLink, updateLink, toggleLike, removeLink } = useLinks(user?.id ?? '');
   const { folders, addFolder, removeFolder, toggleReminder } = useFolders(user?.id ?? '');
-  const { insights, fetchInsights, addInsight, togglePin, removeInsight } = useInsights();
 
   const [showForm, setShowForm] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -32,8 +31,6 @@ const App: React.FC = () => {
   const [newFolderName, setNewFolderName] = useState('');
   const [selectedLink, setSelectedLink] = useState<Link | null>(null);
   const [filterLiked, setFilterLiked] = useState(false);
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<'login' | 'signup'>('signup');
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -63,26 +60,6 @@ const App: React.FC = () => {
 
   const handleLinkClick = (link: Link) => {
     setSelectedLink(link);
-    if (!insights[link.id]) fetchInsights(link.id);
-  };
-
-  const handleAiSummary = async () => {
-    if (aiLoading) return;
-    setAiLoading(true);
-    setAiSummary(null);
-    try {
-      const res = await fetch('/api/summarize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ links: visibleLinks }),
-      });
-      const data = await res.json();
-      setAiSummary(data.summary);
-    } catch {
-      setAiSummary('요약 생성에 실패했어요.');
-    } finally {
-      setAiLoading(false);
-    }
   };
 
   const visibleLinks = links
@@ -133,7 +110,7 @@ const App: React.FC = () => {
         <aside className="sidebar">
           <div
             className={`folder-item ${selectedFolderId === null ? 'active' : ''}`}
-            onClick={() => { setSelectedFolderId(null); setAiSummary(null); }}
+            onClick={() => setSelectedFolderId(null)}
           >
             <span className="sidebar-icon sidebar-home-icon">🏠</span>
             <span className="folder-name">전체</span>
@@ -142,7 +119,7 @@ const App: React.FC = () => {
             <div
               key={folder.id}
               className={`folder-item ${selectedFolderId === folder.id ? 'active' : ''}`}
-              onClick={() => { setSelectedFolderId(folder.id); setAiSummary(null); }}
+              onClick={() => setSelectedFolderId(folder.id)}
             >
               <span className="sidebar-icon">{selectedFolderId === folder.id ? '📂' : '📁'}</span>
               <span className="folder-name">{folder.name}</span>
@@ -178,15 +155,6 @@ const App: React.FC = () => {
             )}
             <div className="board-meta">
               <span className="link-count">{visibleLinks.length}개의 링크</span>
-              {selectedFolderId && (
-                <button
-                  className={`btn-ai-summary ${aiLoading ? 'loading' : ''}`}
-                  onClick={handleAiSummary}
-                  disabled={aiLoading || visibleLinks.length === 0}
-                >
-                  {aiLoading ? '요약 중...' : '✨ AI 읽기 모드'}
-                </button>
-              )}
             </div>
           </div>
 
@@ -198,7 +166,6 @@ const App: React.FC = () => {
                 <LinkCard
                   key={link.id}
                   link={link}
-                  insights={insights[link.id] || []}
                   folders={folders}
                   onToggleLike={toggleLike}
                   onClick={() => handleLinkClick(link)}
@@ -209,24 +176,11 @@ const App: React.FC = () => {
           </div>
         </main>
 
-        {aiSummary !== null && (
-          <aside className="ai-sidebar">
-            <div className="ai-sidebar-header">
-              <span>✨ AI 읽기 모드</span>
-              <button className="btn-close" onClick={() => setAiSummary(null)}>×</button>
-            </div>
-            <div className="ai-summary-content">
-              <p>{aiSummary}</p>
-            </div>
-            <div className="ai-link-list">
-              {visibleLinks.map((l) => (
-                <div key={l.id} className="ai-link-item">
-                  <span className="ai-link-title">{l.title}</span>
-                  {l.description && <span className="ai-link-desc">{l.description}</span>}
-                </div>
-              ))}
-            </div>
-          </aside>
+        {selectedFolder && (
+          <FolderSidePanel
+            folder={selectedFolder}
+            links={visibleLinks}
+          />
         )}
       </div>
 
@@ -270,16 +224,12 @@ const App: React.FC = () => {
       {selectedLink && (
         <LinkDetailPanel
           link={selectedLink}
-          insights={insights[selectedLink.id] || []}
           folders={folders}
           onClose={() => setSelectedLink(null)}
           onUpdate={(id, updates) => {
             updateLink(id, updates);
             setSelectedLink((prev) => prev ? { ...prev, ...updates } : null);
           }}
-          onAddInsight={addInsight}
-          onTogglePin={togglePin}
-          onRemoveInsight={removeInsight}
           onRemove={removeLink}
         />
       )}

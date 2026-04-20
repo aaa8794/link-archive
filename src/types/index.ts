@@ -22,7 +22,9 @@ export interface Link {
   ogImage?: string;
   description?: string;
   liked: boolean;
-  retrospective?: string;
+  insight?: string;
+  idea?: string;
+  status: 'saved' | 'insight' | 'expanded';
   tags: string[];
   createdAt: string;
   updatedAt: string;

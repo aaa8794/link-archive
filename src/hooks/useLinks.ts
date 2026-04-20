@@ -9,7 +9,9 @@ const toLink = (row: any): Link => ({
   ogImage: row.og_image ?? undefined,
   description: row.memo,
   liked: row.liked ?? false,
-  retrospective: row.retrospective,
+  insight: row.insight ?? undefined,
+  idea: row.idea ?? undefined,
+  status: row.status ?? 'saved',
   tags: row.tags ?? [],
   createdAt: row.created_at,
   updatedAt: row.updated_at,
@@ -45,15 +47,28 @@ const useLinks = (userId: string) => {
     await fetchLinks();
   };
 
-  const updateLink = async (id: string, updates: { title?: string; folderId?: string; tags?: string[]; retrospective?: string }) => {
+  const updateLink = async (id: string, updates: { title?: string; folderId?: string; tags?: string[]; insight?: string; idea?: string }) => {
     const dbUpdates: any = { updated_at: new Date().toISOString() };
     if (updates.title !== undefined) dbUpdates.title = updates.title;
     if (updates.folderId !== undefined) dbUpdates.folder_id = updates.folderId || null;
     if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
-    if (updates.retrospective !== undefined) dbUpdates.retrospective = updates.retrospective;
+    if (updates.insight !== undefined) dbUpdates.insight = updates.insight;
+    if (updates.idea !== undefined) dbUpdates.idea = updates.idea;
+
+    // auto-update status based on content depth
+    const currentLink = links.find((l) => l.id === id);
+    const nextIdea = updates.idea !== undefined ? updates.idea : currentLink?.idea;
+    const nextInsight = updates.insight !== undefined ? updates.insight : currentLink?.insight;
+    if (nextIdea?.trim()) {
+      dbUpdates.status = 'expanded';
+    } else if (nextInsight?.trim()) {
+      dbUpdates.status = 'insight';
+    } else {
+      dbUpdates.status = 'saved';
+    }
 
     await supabase.from('links').update(dbUpdates).eq('id', id);
-    setLinks((prev) => prev.map((l) => l.id === id ? { ...l, ...updates, updatedAt: new Date().toISOString() } : l));
+    setLinks((prev) => prev.map((l) => l.id === id ? { ...l, ...updates, status: dbUpdates.status, updatedAt: new Date().toISOString() } : l));
   };
 
   const toggleLike = async (id: string, liked: boolean) => {

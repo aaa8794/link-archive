@@ -1,24 +1,19 @@
 import React, { useState } from 'react';
-import { Link, Insight, Folder } from '../types';
+import { Link, Folder } from '../types';
 
 interface LinkCardProps {
   link: Link;
-  insights: Insight[];
   folders: Folder[];
   onToggleLike: (id: string, liked: boolean) => void;
   onClick: () => void;
   onUpdate: (id: string, updates: { title?: string; folderId?: string; tags?: string[] }) => void;
 }
 
-const LinkCard: React.FC<LinkCardProps> = ({
-  link, insights, folders, onToggleLike, onClick, onUpdate,
-}) => {
+const LinkCard: React.FC<LinkCardProps> = ({ link, folders, onToggleLike, onClick, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(link.title);
   const [editFolderId, setEditFolderId] = useState(link.folderId || '');
   const [editTags, setEditTags] = useState(link.tags.join(', '));
-
-  const pinnedInsight = insights.find((i) => i.isPinned);
 
   const handleSaveEdit = () => {
     onUpdate(link.id, {
@@ -30,7 +25,7 @@ const LinkCard: React.FC<LinkCardProps> = ({
   };
 
   return (
-    <div className={`link-card ${link.liked ? 'liked' : ''}`}>
+    <div className={`link-card status-${link.status} ${link.liked ? 'liked' : ''}`}>
       <div className="link-card-main" onClick={() => !isEditing && onClick()}>
         {link.ogImage && (
           <div className="link-og-thumb-wrap">
@@ -88,8 +83,8 @@ const LinkCard: React.FC<LinkCardProps> = ({
                   {link.tags.map((tag) => <span key={tag} className="tag">#{tag}</span>)}
                 </div>
               )}
-              {pinnedInsight && (
-                <div className="pinned-insight-preview">📌 {pinnedInsight.content}</div>
+              {link.insight && (
+                <div className="card-insight-preview">💡 {link.insight}</div>
               )}
             </>
           )}
