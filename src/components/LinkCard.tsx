@@ -9,6 +9,32 @@ interface LinkCardProps {
   onUpdate: (id: string, updates: { title?: string; folderId?: string; tags?: string[] }) => void;
 }
 
+const HeartIcon = ({ filled }: { filled: boolean }) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M12.1 20.25s-6.85-4.18-9.1-8.03C1.32 9.47 2.54 6 6 6c2.18 0 3.63 1.2 4.46 2.53C11.28 7.2 12.73 6 14.91 6c3.46 0 4.68 3.47 3 6.22-2.25 3.85-9.1 8.03-9.1 8.03Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      fill={filled ? 'currentColor' : 'none'}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const PencilIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M4.75 19.25 8 18.5l9.55-9.55a1.77 1.77 0 0 0 0-2.5l-.95-.95a1.77 1.77 0 0 0-2.5 0L4.55 15.05l-.8 4.2Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="m13.25 6.35 4.4 4.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+);
+
 const LinkCard: React.FC<LinkCardProps> = ({ link, folders, onToggleLike, onClick, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(link.title);
@@ -49,10 +75,17 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, folders, onToggleLike, onClic
               <button
                 className={`btn-like ${link.liked ? 'active' : ''}`}
                 onClick={() => onToggleLike(link.id, !link.liked)}
+                aria-label={link.liked ? '좋아요 해제' : '좋아요'}
               >
-                {link.liked ? '❤️' : '🤍'}
+                <HeartIcon filled={link.liked} />
               </button>
-              <button className="btn-icon" onClick={() => setIsEditing(!isEditing)}>✏️</button>
+              <button
+                className="btn-icon"
+                onClick={() => setIsEditing(!isEditing)}
+                aria-label="편집"
+              >
+                <PencilIcon />
+              </button>
             </div>
           </div>
 
@@ -84,7 +117,7 @@ const LinkCard: React.FC<LinkCardProps> = ({ link, folders, onToggleLike, onClic
                 </div>
               )}
               {link.insight && (
-                <div className="card-insight-preview">💡 {link.insight}</div>
+                <div className="card-insight-preview">{link.insight}</div>
               )}
             </>
           )}

@@ -611,16 +611,16 @@ body {
 }
 
 .sidebar-icon {
-  font-size: 18px;
   flex-shrink: 0;
   width: 24px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
 }
 
 .sidebar-home-icon {
-  font-size: 28px;
-  width: 28px;
+  width: 24px;
 }
 
 .sidebar-add-icon {

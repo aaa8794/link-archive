@@ -19,6 +19,35 @@ const INTERESTS = [
   { id: 'tech', label: '테크 & 코드', desc: '개발, 툴, 자동화' },
 ];
 
+const HomeIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+  </svg>
+);
+
+const FolderIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+  </svg>
+);
+
+const BellIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+
+const BellOffIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    <path d="M18.63 13A17.89 17.89 0 0 1 18 8"/>
+    <path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/>
+    <path d="M18 8a6 6 0 0 0-9.33-5"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </svg>
+);
+
 const App: React.FC = () => {
   const { user, profile, loading, isAnonymous, signOut, completeOnboarding } = useAuth();
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -112,7 +141,7 @@ const App: React.FC = () => {
             className={`folder-item ${selectedFolderId === null ? 'active' : ''}`}
             onClick={() => setSelectedFolderId(null)}
           >
-            <span className="sidebar-icon sidebar-home-icon">🏠</span>
+            <span className="sidebar-icon"><HomeIcon /></span>
             <span className="folder-name">전체</span>
           </div>
           {folders.map((folder: Folder) => (
@@ -121,13 +150,13 @@ const App: React.FC = () => {
               className={`folder-item ${selectedFolderId === folder.id ? 'active' : ''}`}
               onClick={() => setSelectedFolderId(folder.id)}
             >
-              <span className="sidebar-icon">{selectedFolderId === folder.id ? '📂' : '📁'}</span>
+              <span className="sidebar-icon"><FolderIcon /></span>
               <span className="folder-name">{folder.name}</span>
               <button
                 className="reminder-toggle"
                 onClick={(e) => { e.stopPropagation(); toggleReminder(folder.id, !folder.reminderEnabled); }}
               >
-                {folder.reminderEnabled ? '🔔' : '🔕'}
+                {folder.reminderEnabled ? <BellIcon /> : <BellOffIcon />}
               </button>
               <button
                 className="btn-folder-delete"
@@ -147,7 +176,7 @@ const App: React.FC = () => {
           <div className="board-header">
             {selectedFolder && (
               <div className="folder-header">
-                <span>📂 {selectedFolder.name}</span>
+                <span><FolderIcon /> {selectedFolder.name}</span>
                 <span className={`reminder-badge ${selectedFolder.reminderEnabled ? 'on' : 'off'}`}>
                   {selectedFolder.reminderEnabled ? '🔔 알림 켜짐' : '🔕 알림 꺼짐'}
                 </span>

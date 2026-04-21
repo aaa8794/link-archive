@@ -67,7 +67,7 @@ const FolderSidePanel: React.FC<Props> = ({ folder, links }) => {
       {/* AI Summary */}
       <div className="folder-panel-section">
         <div className="folder-panel-section-header">
-          <span className="folder-panel-section-title">✨ AI 분석</span>
+          <span className="folder-panel-section-title">AI 분석</span>
           <button
             className={`btn-ai-generate ${loading ? 'loading' : ''}`}
             onClick={handleGenerate}
@@ -92,7 +92,7 @@ const FolderSidePanel: React.FC<Props> = ({ folder, links }) => {
       {insightLinks.length > 0 && (
         <div className="folder-panel-section">
           <div className="folder-panel-section-header">
-            <span className="folder-panel-section-title">💡 인사이트 모음</span>
+            <span className="folder-panel-section-title">인사이트 모음</span>
           </div>
           <div className="folder-insight-list">
             {insightLinks.map((l) => (

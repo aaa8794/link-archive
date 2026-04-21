@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Folder } from '../types';
 
+const PencilIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M4.75 19.25 8 18.5l9.55-9.55a1.77 1.77 0 0 0 0-2.5l-.95-.95a1.77 1.77 0 0 0-2.5 0L4.55 15.05l-.8 4.2Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path d="m13.25 6.35 4.4 4.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+  </svg>
+);
+
 interface Props {
   link: Link;
   folders: Folder[];
@@ -95,7 +108,7 @@ const LinkDetailPanel: React.FC<Props> = ({ link, folders, onClose, onUpdate, on
             <>
               <div className="detail-title-row">
                 <h2 className="detail-title">{link.title}</h2>
-                <button className="btn-icon" onClick={() => setIsEditing(true)}>✏️</button>
+                <button className="btn-icon" onClick={() => setIsEditing(true)}><PencilIcon /></button>
               </div>
               {link.description && <p className="detail-description">{link.description}</p>}
               {link.tags.length > 0 && (
