@@ -7,7 +7,9 @@ const toLink = (row: any): Link => ({
   title: row.title,
   url: row.url,
   ogImage: row.og_image ?? undefined,
+  images: row.images ?? [],
   description: row.memo,
+  memo: row.memo,
   liked: row.liked ?? false,
   insight: row.insight ?? undefined,
   idea: row.idea ?? undefined,
@@ -36,10 +38,27 @@ const useLinks = (userId: string) => {
     fetchLinks();
   }, [fetchLinks]);
 
-  const addLink = async (title: string, url: string, ogImage?: string, description?: string, folderId?: string) => {
+  const addLink = async (
+    title: string,
+    url: string,
+    ogImage?: string,
+    description?: string,
+    folderId?: string,
+    images: string[] = []
+  ) => {
     const { error } = await supabase
       .from('links')
-      .insert({ title, url, og_image: ogImage || null, memo: description, liked: false, tags: [], user_id: userId, folder_id: folderId || null });
+      .insert({
+        title,
+        url,
+        og_image: ogImage || null,
+        images,
+        memo: description,
+        liked: false,
+        tags: [],
+        user_id: userId,
+        folder_id: folderId || null,
+      });
     if (error) {
       console.error('addLink error:', error);
       return;

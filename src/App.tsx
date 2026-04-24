@@ -240,6 +240,7 @@ const App: React.FC = () => {
           onClose={() => setShowForm(false)}
           folders={folders}
           defaultFolderId={selectedFolderId || undefined}
+          userId={user?.id}
         />
       )}
 

@@ -20,7 +20,9 @@ export interface Link {
   title: string;
   url: string;
   ogImage?: string;
+  images: string[];
   description?: string;
+  memo?: string;
   liked: boolean;
   insight?: string;
   idea?: string;

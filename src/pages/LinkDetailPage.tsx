@@ -63,6 +63,8 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
   // Insight input
   const [insightInput, setInsightInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [gradientPulse, setGradientPulse] = useState(false);
 
   const { insights, addInsight, removeInsight } = useInsights(id ?? '', userId);
 
@@ -77,6 +79,7 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
           title: data.title,
           url: data.url,
           ogImage: data.og_image ?? undefined,
+          images: data.images ?? [],
           description: data.og_description ?? undefined,
           memo: data.memo ?? undefined,
           liked: data.liked ?? false,
@@ -95,6 +98,10 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
       setLoadingLink(false);
     });
   }, [id]);
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [link?.id]);
 
   // Fetch AI summary once link is loaded
   useEffect(() => {
@@ -152,6 +159,8 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
       const newCount = insights.length + 1;
       await updateLinkStatus(link.id, newCount);
       setInsightInput('');
+      setGradientPulse(true);
+      window.setTimeout(() => setGradientPulse(false), 1800);
     }
     setSaving(false);
   };
@@ -189,6 +198,9 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
 
   const insightCount = insights.length;
   const progressSteps = [1, 2, 3];
+  const gradientStage = insightCount >= 3 ? 3 : insightCount;
+  const attachedImages = link.images ?? [];
+  const hasCarouselImages = attachedImages.length > 0;
 
   return (
     <div className="ldp-root">
@@ -209,7 +221,12 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
       <div className="ldp-page-shell">
         <main className="ldp-main-column">
           <section className="ldp-main-card">
-            <div className="ldp-hero">
+            <div className={`ldp-hero ldp-hero-stage-${gradientStage} ${gradientPulse ? 'is-pulsing' : ''}`}>
+              <div className="ldp-hero-field" aria-hidden="true">
+                <span className="ldp-hero-blob ldp-hero-blob-a" />
+                <span className="ldp-hero-blob ldp-hero-blob-b" />
+                <span className="ldp-hero-blob ldp-hero-blob-c" />
+              </div>
               <button className="ldp-back" onClick={() => navigate(-1)} aria-label="뒤로 가기">
                 <BackIcon />
               </button>
@@ -288,8 +305,45 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
               <div className="ldp-content-row">
                 <div className="ldp-image-panel">
                   <span className="ldp-panel-label">이미지</span>
-                  {link.ogImage ? (
-                    <img src={link.ogImage} alt={link.title} className="ldp-og-img" />
+                  {hasCarouselImages ? (
+                    <div className="ldp-carousel">
+                      <img
+                        src={attachedImages[activeImageIndex]}
+                        alt={`${link.title} 이미지 ${activeImageIndex + 1}`}
+                        className="ldp-og-img"
+                      />
+                      {attachedImages.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            className="ldp-carousel-arrow ldp-carousel-arrow-left"
+                            onClick={() => setActiveImageIndex((prev) => (prev === 0 ? attachedImages.length - 1 : prev - 1))}
+                            aria-label="이전 이미지"
+                          >
+                            ‹
+                          </button>
+                          <button
+                            type="button"
+                            className="ldp-carousel-arrow ldp-carousel-arrow-right"
+                            onClick={() => setActiveImageIndex((prev) => (prev === attachedImages.length - 1 ? 0 : prev + 1))}
+                            aria-label="다음 이미지"
+                          >
+                            ›
+                          </button>
+                          <div className="ldp-carousel-dots">
+                            {attachedImages.map((_, index) => (
+                              <button
+                                key={`dot-${index}`}
+                                type="button"
+                                className={`ldp-carousel-dot ${index === activeImageIndex ? 'active' : ''}`}
+                                onClick={() => setActiveImageIndex(index)}
+                                aria-label={`${index + 1}번 이미지로 이동`}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   ) : (
                     <div className="ldp-image-placeholder" aria-hidden="true">
                       <div className="ldp-image-placeholder-grid" />
