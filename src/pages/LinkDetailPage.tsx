@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import useInsights from '../hooks/useInsights';
 import { Link } from '../types';
+import { normalizeImageUrlInput, isLikelyImageUrl, uploadLinkImageFile } from '../lib/linkImageUpload';
 
 const BackIcon = () => <img src="/ic-back.png" width={24} height={24} alt="" />;
-const EditIcon = () => <img src="/ic-edit.png" width={20} height={20} alt="" />;
 
 const TrashIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -37,6 +37,12 @@ const formatDate = (dateStr: string) => {
   return `${date.getFullYear()}. ${date.getMonth() + 1}. ${date.getDate()}`;
 };
 
+interface OgData {
+  title: string;
+  image: string | null;
+  description: string | null;
+}
+
 interface Props {
   userId: string;
 }
@@ -58,11 +64,19 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
   // Edit mode
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
+  const [editUrl, setEditUrl] = useState('');
   const [editTags, setEditTags] = useState('');
+  const [editImages, setEditImages] = useState<string[]>([]);
+  const [editImageUrlInput, setEditImageUrlInput] = useState('');
+  const [editImageError, setEditImageError] = useState('');
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // Insight input
   const [insightInput, setInsightInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [gradientPulse, setGradientPulse] = useState(false);
 
   const { insights, addInsight, removeInsight } = useInsights(id ?? '', userId);
 
@@ -77,6 +91,7 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
           title: data.title,
           url: data.url,
           ogImage: data.og_image ?? undefined,
+          images: data.images ?? [],
           description: data.og_description ?? undefined,
           memo: data.memo ?? undefined,
           liked: data.liked ?? false,
@@ -90,11 +105,17 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
         setLink(l);
         setMemo(l.memo ?? '');
         setEditTitle(l.title);
+        setEditUrl(l.url);
         setEditTags(l.tags.join(', '));
+        setEditImages(l.images ?? []);
       }
       setLoadingLink(false);
     });
   }, [id]);
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [link?.id]);
 
   // Fetch AI summary once link is loaded
   useEffect(() => {
@@ -118,6 +139,21 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
     await supabase.from('links').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', linkId);
   };
 
+  const fetchOgMetadata = async (rawUrl: string) => {
+    const fullUrl = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
+    const res = await fetch('/api/og', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: fullUrl }),
+    });
+
+    if (!res.ok) {
+      throw new Error('메타 정보를 가져오지 못했어요.');
+    }
+
+    return res.json() as Promise<OgData>;
+  };
+
   const updateLinkStatus = async (linkId: string, insightCount: number) => {
     const status = insightCount >= 2 ? 'expanded' : insightCount === 1 ? 'insight' : 'saved';
     await supabase.from('links').update({ status, updated_at: new Date().toISOString() }).eq('id', linkId);
@@ -136,12 +172,117 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
     }, 800);
   };
 
-  const handleSaveEdit = () => {
+  const resetEditState = (currentLink: Link) => {
+    setEditTitle(currentLink.title);
+    setEditUrl(currentLink.url);
+    setEditTags(currentLink.tags.join(', '));
+    setEditImages(currentLink.images ?? []);
+    setEditImageUrlInput('');
+    setEditImageError('');
+  };
+
+  const handleStartEdit = () => {
     if (!link) return;
-    const tags = editTags.split(',').map((t) => t.trim()).filter(Boolean);
-    updateLinkInDb(link.id, { title: editTitle, tags });
-    setLink((prev) => prev ? { ...prev, title: editTitle, tags } : prev);
+    resetEditState(link);
+    setSavingEdit(false);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    if (!link) return;
+    resetEditState(link);
+    setSavingEdit(false);
     setIsEditing(false);
+  };
+
+  const handleAddEditImageUrl = () => {
+    const normalized = normalizeImageUrlInput(editImageUrlInput);
+    if (!normalized || !isLikelyImageUrl(normalized)) {
+      setEditImageError('이미지 URL을 확인해주세요.');
+      return;
+    }
+
+    setEditImages((prev) => [...prev, normalized]);
+    setEditImageUrlInput('');
+    setEditImageError('');
+  };
+
+  const handleEditFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    if (!userId) {
+      setEditImageError('로그인 후 이미지 업로드를 사용할 수 있어요.');
+      e.target.value = '';
+      return;
+    }
+
+    setUploadingImages(true);
+    setEditImageError('');
+
+    try {
+      const uploaded = await Promise.all(files.map((file) => uploadLinkImageFile(userId, file)));
+      setEditImages((prev) => [...prev, ...uploaded]);
+    } catch (error) {
+      setEditImageError(error instanceof Error ? error.message : '일부 이미지 업로드에 실패했어요.');
+    } finally {
+      setUploadingImages(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveEditImage = (index: number) => {
+    setEditImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveEdit = async () => {
+    if (!link) return;
+    const normalizedUrl = editUrl.trim();
+    if (!editTitle.trim() || !normalizedUrl) return;
+
+    const fullUrl = normalizedUrl.startsWith('http') ? normalizedUrl : `https://${normalizedUrl}`;
+    const tags = editTags.split(',').map((t) => t.trim()).filter(Boolean);
+    setSavingEdit(true);
+
+    try {
+      let nextOgImage = link.ogImage;
+      let nextDescription = link.description;
+
+      if (fullUrl !== link.url) {
+        try {
+          const og = await fetchOgMetadata(fullUrl);
+          nextOgImage = og.image || nextOgImage;
+          nextDescription = og.description || nextDescription;
+        } catch {
+          // Keep existing metadata when refresh fails.
+        }
+      }
+
+      await updateLinkInDb(link.id, {
+        title: editTitle.trim(),
+        url: fullUrl,
+        tags,
+        images: editImages,
+        og_image: nextOgImage || null,
+        og_description: nextDescription || null,
+      });
+
+      const updatedLink: Link = {
+        ...link,
+        title: editTitle.trim(),
+        url: fullUrl,
+        tags,
+        images: editImages,
+        ogImage: nextOgImage,
+        description: nextDescription,
+        updatedAt: new Date().toISOString(),
+      };
+
+      setLink(updatedLink);
+      setActiveImageIndex(0);
+      setIsEditing(false);
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   const handleAddInsight = async () => {
@@ -152,6 +293,8 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
       const newCount = insights.length + 1;
       await updateLinkStatus(link.id, newCount);
       setInsightInput('');
+      setGradientPulse(true);
+      window.setTimeout(() => setGradientPulse(false), 1800);
     }
     setSaving(false);
   };
@@ -189,37 +332,38 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
 
   const insightCount = insights.length;
   const progressSteps = [1, 2, 3];
+  const gradientStage = insightCount >= 3 ? 3 : insightCount;
+  const attachedImages = link.images ?? [];
+  const displayImages = attachedImages.length > 0 ? attachedImages : link.ogImage ? [link.ogImage] : [];
+  const hasCarouselImages = displayImages.length > 0;
 
   return (
     <div className="ldp-root">
-      <header className="ldp-page-header">
-        <div className="ldp-page-brand">
-          <img src="/Archivologo.svg" alt="archiv*o" className="ldp-page-logo" />
-        </div>
-        <div className="ldp-page-actions">
-          <button className="btn-secondary" onClick={() => navigate('/')}>
-            로그인
-          </button>
-          <button className="btn-primary" onClick={() => navigate('/archive')}>
-            + 링크 추가
-          </button>
-        </div>
-      </header>
-
       <div className="ldp-page-shell">
         <main className="ldp-main-column">
           <section className="ldp-main-card">
-            <div className="ldp-hero">
-              <button className="ldp-back" onClick={() => navigate(-1)} aria-label="뒤로 가기">
+            <div className={`ldp-hero ldp-hero-stage-${gradientStage} ${gradientPulse ? 'is-pulsing' : ''}`}>
+              <div className="ldp-hero-field" aria-hidden="true">
+                <span className="ldp-hero-blob ldp-hero-blob-a" />
+                <span className="ldp-hero-blob ldp-hero-blob-b" />
+                <span className="ldp-hero-blob ldp-hero-blob-c" />
+              </div>
+              <button className="ldp-back" onClick={() => navigate(-1)}>
                 <BackIcon />
+                <span>돌아가기</span>
               </button>
               <div className="ldp-progress">
                 <div className="ldp-progress-track">
-                  {progressSteps.map((step, i) => (
+                  {progressSteps.map((step) => (
                     <React.Fragment key={step}>
-                      <div className={`ldp-progress-dot ${insightCount >= step ? 'filled' : ''}`} />
-                      {i < progressSteps.length - 1 && (
-                        <div className={`ldp-progress-line ${insightCount > step ? 'filled' : ''}`} />
+                      {insightCount >= step ? (
+                        <img
+                          src={`/Union${step === 1 ? '' : `-${step - 1}`}.png`}
+                          className="ldp-progress-flower"
+                          alt=""
+                        />
+                      ) : (
+                        <img src="/empty-ic-archivo.png" className="ldp-progress-flower" alt="" />
                       )}
                     </React.Fragment>
                   ))}
@@ -245,16 +389,18 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
                       onChange={(e) => setEditTags(e.target.value)}
                     />
                     <div className="ldp-edit-actions">
-                      <button className="btn-cancel" onClick={() => setIsEditing(false)}>취소</button>
-                      <button className="btn-primary" onClick={handleSaveEdit}>저장</button>
+                      <button className="btn-cancel" onClick={handleCancelEdit}>취소</button>
+                      <button className="btn-primary" onClick={handleSaveEdit} disabled={savingEdit || uploadingImages || !editTitle.trim() || !editUrl.trim()}>
+                        {savingEdit ? '저장 중...' : '저장'}
+                      </button>
                     </div>
                   </div>
                 ) : (
                   <>
                     <div className="ldp-title-row">
                       <h1 className="ldp-title">{link.title}</h1>
-                      <button className="btn-icon ldp-edit-btn" onClick={() => setIsEditing(true)}>
-                        <EditIcon />
+                      <button className="ldp-edit-text-btn" onClick={handleStartEdit}>
+                        수정
                       </button>
                     </div>
                     <div className="ldp-meta">
@@ -273,23 +419,121 @@ const LinkDetailPage: React.FC<Props> = ({ userId }) => {
                 )}
               </div>
 
-              <a href={link.url} target="_blank" rel="noopener noreferrer" className="ldp-url-bar">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                </svg>
-                <span className="ldp-url-text">{link.url}</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                  <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
+              {isEditing ? (
+                <div className="ldp-url-edit-wrap">
+                  <span className="ldp-inline-label">링크</span>
+                  <input
+                    className="ldp-edit-url-bar"
+                    value={editUrl}
+                    onChange={(e) => setEditUrl(e.target.value)}
+                    placeholder="링크 URL"
+                  />
+                </div>
+              ) : (
+                <a href={link.url} target="_blank" rel="noopener noreferrer" className="ldp-url-bar">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                  <span className="ldp-url-text">{link.url}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </a>
+              )}
 
               <div className="ldp-content-row">
                 <div className="ldp-image-panel">
                   <span className="ldp-panel-label">이미지</span>
-                  {link.ogImage ? (
-                    <img src={link.ogImage} alt={link.title} className="ldp-og-img" />
+                  {isEditing ? (
+                    <div className="ldp-image-editor">
+                      {editImages.length > 0 ? (
+                        <div className="ldp-edit-image-list">
+                          {editImages.map((image, index) => (
+                            <div key={`${image}-${index}`} className="ldp-edit-image-item">
+                              <img src={image} alt="" className="ldp-edit-image-thumb" />
+                              <button
+                                type="button"
+                                className="ldp-edit-image-remove"
+                                onClick={() => handleRemoveEditImage(index)}
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : link.ogImage ? (
+                        <div className="ldp-fallback-preview">
+                          <img src={link.ogImage} alt="" className="ldp-fallback-preview-image" />
+                          <p className="ldp-fallback-preview-note">현재 링크 썸네일이 표시되고 있어요. 직접 이미지를 추가하면 그 이미지가 우선됩니다.</p>
+                        </div>
+                      ) : (
+                        <div className="ldp-image-placeholder" aria-hidden="true">
+                          <div className="ldp-image-placeholder-grid" />
+                        </div>
+                      )}
+
+                      <div className="ldp-edit-image-tools">
+                        <label className="add-link-upload-button ldp-edit-upload-button">
+                          <input type="file" accept="image/*" multiple onChange={handleEditFileChange} />
+                          <span>{uploadingImages ? '업로드 중...' : '파일 업로드'}</span>
+                        </label>
+
+                        <div className="add-link-image-url-row">
+                          <input
+                            type="text"
+                            placeholder="이미지 URL 추가"
+                            value={editImageUrlInput}
+                            onChange={(e) => setEditImageUrlInput(e.target.value)}
+                          />
+                          <button type="button" className="btn-secondary" onClick={handleAddEditImageUrl}>
+                            추가
+                          </button>
+                        </div>
+
+                        {editImageError && <p className="add-link-image-error">{editImageError}</p>}
+                      </div>
+                    </div>
+                  ) : hasCarouselImages ? (
+                    <div className="ldp-carousel">
+                      <img
+                        src={displayImages[activeImageIndex]}
+                        alt={`${link.title} 이미지 ${activeImageIndex + 1}`}
+                        className="ldp-og-img"
+                      />
+                      {displayImages.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            className="ldp-carousel-arrow ldp-carousel-arrow-left"
+                            onClick={() => setActiveImageIndex((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1))}
+                            aria-label="이전 이미지"
+                          >
+                            ‹
+                          </button>
+                          <button
+                            type="button"
+                            className="ldp-carousel-arrow ldp-carousel-arrow-right"
+                            onClick={() => setActiveImageIndex((prev) => (prev === displayImages.length - 1 ? 0 : prev + 1))}
+                            aria-label="다음 이미지"
+                          >
+                            ›
+                          </button>
+                          <div className="ldp-carousel-dots">
+                            {displayImages.map((_, index) => (
+                              <button
+                                key={`dot-${index}`}
+                                type="button"
+                                className={`ldp-carousel-dot ${index === activeImageIndex ? 'active' : ''}`}
+                                onClick={() => setActiveImageIndex(index)}
+                                aria-label={`${index + 1}번 이미지로 이동`}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   ) : (
                     <div className="ldp-image-placeholder" aria-hidden="true">
                       <div className="ldp-image-placeholder-grid" />

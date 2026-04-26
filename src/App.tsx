@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import './App.css';
 import LinkCard from './components/LinkCard';
-import LinkDetailPanel from './components/LinkDetailPanel';
 import FolderSidePanel from './components/FolderSidePanel';
 import AddLinkForm from './components/AddLinkForm';
 import AuthPage from './components/AuthPage';
+import LoadingScreen from './components/LoadingScreen';
+import LinkDetailPage from './pages/LinkDetailPage';
 import useAuth from './hooks/useAuth';
 import useLinks from './hooks/useLinks';
 import useFolders from './hooks/useFolders';
-import { Folder, Link } from './types';
+import { Folder } from './types';
 
 const INTERESTS = [
   { id: 'visual', label: '비주얼', desc: '이미지, 색감, 레퍼런스' },
@@ -19,65 +21,34 @@ const INTERESTS = [
   { id: 'tech', label: '테크 & 코드', desc: '개발, 툴, 자동화' },
 ];
 
-const HomeIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-  </svg>
+const HomeIcon = ({ active }: { active?: boolean }) => (
+  <img src={active ? '/ic-home-active.png' : '/ic-home-disabled.png'} width={20} height={20} alt="" />
 );
 
-const FolderIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
-  </svg>
+const FolderIcon = ({ active }: { active?: boolean }) => (
+  <img src={active ? '/ic-folder-fill-active.png' : '/ic-folder-fill.png'} width={20} height={20} alt="" />
 );
 
-const BellIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-  </svg>
-);
 
-const BellOffIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-    <path d="M18.63 13A17.89 17.89 0 0 1 18 8"/>
-    <path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/>
-    <path d="M18 8a6 6 0 0 0-9.33-5"/>
-    <line x1="1" y1="1" x2="23" y2="23"/>
-  </svg>
-);
-
-const App: React.FC = () => {
-  const { user, profile, loading, isAnonymous, signOut, completeOnboarding } = useAuth();
+const HomeLayout: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, profile, isAnonymous, signOut, completeOnboarding } = useAuth();
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const { links, addLink, updateLink, toggleLike, removeLink } = useLinks(user?.id ?? '');
-  const { folders, addFolder, removeFolder, toggleReminder } = useFolders(user?.id ?? '');
+  const { links, addLink, updateLink, toggleLike } = useLinks(user?.id ?? '');
+  const { folders, addFolder, removeFolder } = useFolders(user?.id ?? '');
 
   const [showForm, setShowForm] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  const [selectedLink, setSelectedLink] = useState<Link | null>(null);
   const [filterLiked, setFilterLiked] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<'login' | 'signup'>('signup');
-  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const openAuth = (tab: 'login' | 'signup') => {
     setAuthDefaultTab(tab);
     setShowAuthModal(true);
   };
-
-  if (loading) {
-    return (
-      <div className="auth-page">
-        <div className="auth-loading">
-          <span className="auth-logo">archiv<span className="auth-logo-star">*</span>o</span>
-        </div>
-      </div>
-    );
-  }
 
   const handleAddFolder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,10 +56,6 @@ const App: React.FC = () => {
     await addFolder(newFolderName.trim());
     setNewFolderName('');
     setShowNewFolderInput(false);
-  };
-
-  const handleLinkClick = (link: Link) => {
-    setSelectedLink(link);
   };
 
   const visibleLinks = links
@@ -103,9 +70,7 @@ const App: React.FC = () => {
         <h1 className="logo"><img src="/Archivologo.svg" alt="archiv*o" className="logo-img" /></h1>
         <div className="header-actions">
           {isAnonymous ? (
-            <>
-              <button className="btn-secondary" onClick={() => openAuth('login')}>로그인</button>
-            </>
+            <button className="btn-secondary" onClick={() => openAuth('login')}>로그인</button>
           ) : (
             <>
               <button
@@ -125,23 +90,13 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {isAnonymous && !bannerDismissed && (
-        <div className="anon-banner">
-          <span>현재 이 기기에만 저장돼요.</span>
-          <button className="anon-banner-cta" onClick={() => openAuth('signup')}>
-            계정 만들면 모바일에서도 볼 수 있어요 →
-          </button>
-          <button className="anon-banner-close" onClick={() => setBannerDismissed(true)} aria-label="닫기">×</button>
-        </div>
-      )}
-
       <div className="layout">
         <aside className="sidebar">
           <div
             className={`folder-item ${selectedFolderId === null ? 'active' : ''}`}
             onClick={() => setSelectedFolderId(null)}
           >
-            <span className="sidebar-icon"><HomeIcon /></span>
+            <span className="sidebar-icon"><HomeIcon active={selectedFolderId === null} /></span>
             <span className="folder-name">전체</span>
           </div>
           {folders.map((folder: Folder) => (
@@ -150,14 +105,8 @@ const App: React.FC = () => {
               className={`folder-item ${selectedFolderId === folder.id ? 'active' : ''}`}
               onClick={() => setSelectedFolderId(folder.id)}
             >
-              <span className="sidebar-icon"><FolderIcon /></span>
+              <span className="sidebar-icon"><FolderIcon active={selectedFolderId === folder.id} /></span>
               <span className="folder-name">{folder.name}</span>
-              <button
-                className="reminder-toggle"
-                onClick={(e) => { e.stopPropagation(); toggleReminder(folder.id, !folder.reminderEnabled); }}
-              >
-                {folder.reminderEnabled ? <BellIcon /> : <BellOffIcon />}
-              </button>
               <button
                 className="btn-folder-delete"
                 onClick={(e) => { e.stopPropagation(); removeFolder(folder.id); }}
@@ -176,10 +125,8 @@ const App: React.FC = () => {
           <div className="board-header">
             {selectedFolder && (
               <div className="folder-header">
-                <span><FolderIcon /> {selectedFolder.name}</span>
-                <span className={`reminder-badge ${selectedFolder.reminderEnabled ? 'on' : 'off'}`}>
-                  {selectedFolder.reminderEnabled ? '🔔 알림 켜짐' : '🔕 알림 꺼짐'}
-                </span>
+                <FolderIcon active />
+                <span>{selectedFolder.name}</span>
               </div>
             )}
             <div className="board-meta">
@@ -187,22 +134,26 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="link-list">
-            {visibleLinks.length === 0 ? (
-              <p className="empty-hint">저장된 링크가 없어요</p>
-            ) : (
-              visibleLinks.map((link) => (
+          {visibleLinks.length === 0 ? (
+            <div className="empty-state">
+              <img src="/empty.png" alt="" className="empty-illustration" />
+              <p className="empty-title">저장된 링크가 없어요</p>
+              <p className="empty-subtitle">링크를 추가해보세요!</p>
+            </div>
+          ) : (
+            <div className="link-list">
+              {visibleLinks.map((link) => (
                 <LinkCard
                   key={link.id}
                   link={link}
                   folders={folders}
                   onToggleLike={toggleLike}
-                  onClick={() => handleLinkClick(link)}
+                  onClick={() => navigate(`/archive/${link.id}`)}
                   onUpdate={updateLink}
                 />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </main>
 
         {selectedFolder && (
@@ -240,6 +191,7 @@ const App: React.FC = () => {
           onClose={() => setShowForm(false)}
           folders={folders}
           defaultFolderId={selectedFolderId || undefined}
+          userId={user?.id}
         />
       )}
 
@@ -247,19 +199,6 @@ const App: React.FC = () => {
         <AuthPage
           onClose={() => setShowAuthModal(false)}
           defaultTab={authDefaultTab}
-        />
-      )}
-
-      {selectedLink && (
-        <LinkDetailPanel
-          link={selectedLink}
-          folders={folders}
-          onClose={() => setSelectedLink(null)}
-          onUpdate={(id, updates) => {
-            updateLink(id, updates);
-            setSelectedLink((prev) => prev ? { ...prev, ...updates } : null);
-          }}
-          onRemove={removeLink}
         />
       )}
 
@@ -304,10 +243,7 @@ const App: React.FC = () => {
               >
                 시작하기
               </button>
-              <button
-                className="btn-skip"
-                onClick={() => completeOnboarding([])}
-              >
+              <button className="btn-skip" onClick={() => completeOnboarding([])}>
                 건너뛰기
               </button>
             </div>
@@ -315,6 +251,38 @@ const App: React.FC = () => {
         </div>
       )}
     </div>
+  );
+};
+
+const MIN_LOADING_MS = 3000;
+
+const App: React.FC = () => {
+  const { user, loading } = useAuth();
+  const [showLoading, setShowLoading] = useState(true);
+  const [loadingExiting, setLoadingExiting] = useState(false);
+  const mountTime = React.useRef(Date.now());
+
+  useEffect(() => {
+    if (!loading) {
+      const elapsed = Date.now() - mountTime.current;
+      const wait = Math.max(0, MIN_LOADING_MS - elapsed);
+      const t = setTimeout(() => {
+        setLoadingExiting(true);
+        const t2 = setTimeout(() => setShowLoading(false), 650);
+        return () => clearTimeout(t2);
+      }, wait);
+      return () => clearTimeout(t);
+    }
+  }, [loading]);
+
+  if (showLoading) return <LoadingScreen exiting={loadingExiting} />;
+
+  return (
+    <Routes>
+      <Route path="/" element={<HomeLayout />} />
+      <Route path="/archive" element={<HomeLayout />} />
+      <Route path="/archive/:id" element={<LinkDetailPage userId={user?.id ?? ''} />} />
+    </Routes>
   );
 };
 
